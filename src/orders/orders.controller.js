@@ -10,11 +10,15 @@ const nextId = require("../utils/nextId");
 
 //Validate order exists, deliverTo, mobileNumber, dishes, dishes.quantity, status
 
+/************Middleware validation functions************/
+
+//Finding existing dish by id or returning an error
 function orderExists(req, res, next) {
     const {orderId} = req.params;
     res.locals.orderId = orderId;
     const foundOrder = orders.find((order) => order.id === orderId);
     if(foundOrder) {
+        //assigning res.locals property to foundOrder if it exists
         res.locals.order = foundOrder
         next()
     }; 
@@ -22,9 +26,13 @@ function orderExists(req, res, next) {
 };
 
 function deliverToPropertyIsValid(req, res, next) {
+    //Setting destructured data value to request body
     const {data = null} = req.body;
+    //Assigning res.locals property to be request body/data
     res.locals.newOrder = data;
+    //Setting variable to deliverTo property
     const orderDeliverTo = res.locals.newOrder.deliverTo;
+    //Valid conditionals
     if(orderDeliverTo && orderDeliverTo !== "") {
         next()
     };
@@ -32,7 +40,9 @@ function deliverToPropertyIsValid(req, res, next) {
 };
 
 function mobileNumberPropertyIsValid(req, res, next) {
+    //Setting variable to mobileNumber property
     const orderMobileNumber = res.locals.newOrder.mobileNumber;
+    //Valid conditionals
     if(orderMobileNumber && orderMobileNumber !== "") {
         next()
     };
@@ -40,7 +50,9 @@ function mobileNumberPropertyIsValid(req, res, next) {
 };
 
 function dishesPropertyIsValid(req, res, next) {
+    //Setting variable to dishes property
     const orderDishes = res.locals.newOrder.dishes;
+    //Valid conditionals
     if(orderDishes && Array.isArray(orderDishes) && orderDishes !== "") {
         next()
     };
@@ -51,12 +63,17 @@ function dishesPropertyIsValid(req, res, next) {
 };
 
 function dishesQuantityPropertyIsValid(req, res, next) {
+    //Setting variable to dishes property
     const orderDishes = res.locals.newOrder.dishes
+    //Repeated error case to account for cases where dishes array does not existing or is empty (needed for .forEach function to validate properly) 
     if(!orderDishes || orderDishes.length === 0) {
       next({status: 400, message: "Order must include a dish"})
     }
+    //Iterating through orderDishes array
     orderDishes.forEach((dish) => {
+        //Setting variable to the quantity property of each dish in the given array
         const dishQuantity = dish.quantity;
+        //Invalidation conditionals to return error cases
         if(!dishQuantity || typeof dishQuantity !== "number" || dishQuantity <= 0) {
             next({status: 400, message: `Dish ${orderDishes.indexOf(dish)} must have a quantity that is an integer greater than 0`})
         }   
@@ -65,8 +82,11 @@ function dishesQuantityPropertyIsValid(req, res, next) {
 };
 
 function orderIdMatches(req, res, next) {
+    //Setting variable from parameter Id
     const orderId = res.locals.orderId;
+    //Setting variable to id property
     const id  = res.locals.newOrder.id;
+    //Invalidation conditionals to return error cases
     if (orderId !== id && id) {
        return next({
           status: 400,
@@ -77,13 +97,16 @@ function orderIdMatches(req, res, next) {
  };
 
 function statusPropertyIsValid(req, res, next) {
+    //Setting status variable
     const orderStatus = res.locals.newOrder.status;
+    //Valid conditionals
     if(orderStatus && orderStatus !== "" && orderStatus !== "invalid") {
         next();
     }
     next({status: 400, message: "Order must have a status of pending, preparing, out-for-delivery, delivered"});
 };
 
+//Edge case where order status is "delivered", used for update validation
 function deliveredOrderValidation(req, res, next) {
     if(res.locals.order.status === "delivered") {
         return next({status: 400, message: "A delivered order cannot be changed"});
@@ -91,6 +114,7 @@ function deliveredOrderValidation(req, res, next) {
     next();
 };
 
+//Edge case where order status is "pending", used for delete validation
 function pendingOrderDeleteValidation(req, res, next) {
     if(res.locals.order.status === "pending") {
         next();
@@ -100,6 +124,7 @@ function pendingOrderDeleteValidation(req, res, next) {
 
 function create(req, res) {
     const newOrder = res.locals.newOrder
+    //Adding id property to newOrder
     newOrder.id = nextId()
     orders.push(newOrder)
     res.status(201).json({data: newOrder})
@@ -123,7 +148,9 @@ function update(req, res) {
 };
 
 function destroy(req, res) {
+    //Setting variable to the index of the order
     const index = orders.indexOf(res.locals.order);
+    //Splicing away the order upon validation
     orders.splice(index, 1);
     res.sendStatus(204);
 };
