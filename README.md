@@ -1,4 +1,4 @@
-#GrubDash Backend project for Thinkful
+# GrubDash Backend project for Thinkful
 
 Overall this project was super enjoyable, and good practice, especially for using res.locals. When I learn a little bit more, I know I can and intend to revisit this project and clean it up. 
 I had to repeat a lot of code to get all the tests to pass, and I know I can tidy it. That being said I feel I was able to come up with some creative solutions to some of the issues I was coming across trying to get the tests to pass.
